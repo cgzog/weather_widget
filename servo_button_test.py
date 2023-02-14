@@ -20,9 +20,9 @@ servo_2 = GPIO.PWM(servo_pin_2, 50) # GPIO 23 for PWM with 50Hz
 servo_1.start(5)
 servo_2.start(5)
 
-sleepPause = 0.1
+sleepPause = 0.5
 
-positions = [ 5.0, 7.5, 10.0, 12.5, 15.0, 17.5, 15.0, 12.5, 10.0, 7.5, 5.0 ]
+positions = [ 10.0, 12.5, 15.0, 17.5, 19.9, 17.5, 15.0, 12.5, 10.0 ]
 
 try:
 
@@ -30,18 +30,19 @@ try:
 
 		for position in positions:
 
+			print("Setting to position ", position)
+
 			servo_1.ChangeDutyCycle(position)
 			servo_2.ChangeDutyCycle(position)
 
 			time.sleep(sleepPause)
 
 			if not(GPIO.input(button_pin)):
-				print("Pressed")
+				print("Pressed")
 			else:
-				print("Released")	
-				
+				print("Released")	
 
-		time.sleep(5)
+		time.sleep(4)
 
 except KeyboardInterrupt:
 
