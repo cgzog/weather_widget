@@ -16,6 +16,8 @@ try:
 
 #	servos.init()
 
+	weather.startWeatherPolling()
+
 	currentTimePos = mapping.labelToPos("Now")
 
 	print("Current Time Position = ", currentTimePos)
