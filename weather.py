@@ -4,17 +4,19 @@ import requests
 import json
 import os
 import sys
+import time
 
 
 # initially all set to "Clear" but will be updated once the calls are made
 
-weather = {
-		"Now": "Clear",
-		"3hr": "Clear",
-		"6hr": "Clear",
-		"12hr": "Clear",
-		"24hr": "Clear",
-		"48hr": "Clear"
+weather = {	# display: { condition, time }
+
+		"Now":  [ "Clear", 12345 ],
+		"3hr":  [ "Clear", 23456 ],
+		"6hr":  [ "Clear", 34567 ],
+		"12hr": [ "Clear", 45678 ],
+		"24hr": [ "Clear", 56789 ],
+		"48hr": [ "Clear", 67890 ]
 	  }
 
 
@@ -27,73 +29,80 @@ weatherLat          = "41.4377"
 weatherLong         = "-88.090417"
 weatherApiKeyEnvVar = "OPEN_WEATHER_API_KEY"
 weatherApiKey       = ""
-#weatherApiKey      = "26583a6f54b1f87dc63e0a7e0b9247c0"
 
 
 
 
 def startWeatherPolling():
 
-	weatherApiKey= os.environ[weatherApiKeyEnvVar]
+	weatherApiKey = os.environ[weatherApiKeyEnvVar]
+
 	if (len(weatherApiKey) == 0):
 		print(sys.argv[0] + ": error: OPEN_WEATHER_API_KEY not set\n")
 		sys.exit(1)
 
-	apiString = "https://api.openweathermap.org/data/2.5/weather?lat=" + \
-                    weatherLat + "&lon=" + \
-	            weatherLong + "&exclude=hourly,daily&appid=" + \
-	            weatherApiKey
+	pollNow(weatherApiKey)
 
-	print(apiString, "\n")
-
-	pollNow(apiString)
-
-	poll3hr()
-
-	poll6hr()
-
-	poll12hr()
-
-	poll24hr()
-
-	poll48hr()
+	pollFuture(weatherApiKey)
 
 
-def	pollNow(apiString):
 
-	response = requests.get(apiString)
+def	pollNow(apiKey):
 
-	print("Ret Code = ", response.status_code, "\n")
+	nowApiCall = "https://api.openweathermap.org/data/2.5/weather?lat=" + \
+                       weatherLat + "&lon=" + \
+	               weatherLong + "&exclude=hourly,daily&appid=" + \
+	               apiKey
+
+	# print(nowApiCall, "\n")
+
+	response = requests.get(nowApiCall)
+
+	if (response.status_code == 200):
+		weatherAvailable = True
+	else:
+		weatherAvailable = False
+		return
+		
+	weatherNow = json.loads(response.text)
+
+	# save "now" condition and timestamp
+	weather['Now'][0] = weatherNow['weather'][0]['main']
+	weather['Now'][1] = weatherNow['dt']
+
+	print("weather['Now'] ", weather['Now'], end = "\n\n")
+
+
+
+def	pollFuture(apiKey):
+
+	print("pollFuture(): apiKey = ", apiKey, end="\n")
+
+	now = int(time.time())
+
+	print("now = ", now, end="\n")
+
+	futureApiCall = "https://api.openweathermap.org/data/2.5/forecast?lat=" + \
+                        weatherLat + "&lon=" + \
+	                weatherLong + "&exclude=hourly,daily&appid=" + \
+	                apiKey
+
+	# print(futureApiCall, "\n")
+
+	response = requests.get(futureApiCall)
+
+	if (response.status_code == 200):
+		weatherAvailable = True
+	else:
+		weatherAvailable = False
+		return
+		
 
 	print(response.json(), "\n")
 
-	weatherNow = json.loads(response.text)
+	weatherForecast = json.loads(response.text)
 
-	print(type(weatherNow), "coord = ", weatherNow['coord'], end="\n")
-	print("lat = ", weatherNow['coord']['lat'], end="\n")
-	print("now = ", weatherNow['weather'][0]['main'], end="\n")
+	print(type(weatherForecast), "cnt = ", weatherForecast['cnt'], end="\n")
 
-
-def	poll3hr():
-
-	print("Poll3hr()", "\n")
-
-
-def	poll6hr():
-
-	print("Poll6hr()", "\n")
-
-
-def	poll12hr():
-
-	print("Poll12hr()", "\n")
-
-
-def	poll24hr():
-
-	print("Poll24hr()", "\n")
-
-
-def	poll48hr():
-
-	print("Poll48hr()", "\n")
+	jsonPrettyPrint = json.dumps(weatherForecast, indent=4)
+	print(jsonPrettyPrint)
